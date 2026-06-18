@@ -83,7 +83,7 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
 
 function SearchDialog({ onClose }: SearchDialogProps) {
   const router = useRouter()
-  const { search, setSearch, query } = useDocsSearch({ type: 'fetch' })
+  const { search, setSearch, query } = useDocsSearch({ type: 'static' })
   const [selectedIndex, setSelectedIndex] = useState(0)
   const resultsRef = useRef<HTMLUListElement>(null)
 

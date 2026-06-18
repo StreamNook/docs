@@ -7,6 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "pages:deploy": "next build && wrangler pages deploy out --project-name streamnook-docs",
     "lint": "next lint",
     "test": "vitest",
     "test:ui": "vitest --ui"
