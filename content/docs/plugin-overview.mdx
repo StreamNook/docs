@@ -1,0 +1,104 @@
+---
+title: Building Plugins
+description: What StreamNook plugins are, the two runtime kinds, and how the whole system fits together.
+---
+
+## What a plugin is
+
+A plugin is an opt-in add-on you build and a user installs. The user grants it permissions, and they can disable or remove it at any time. The StreamNook core binary ships with **zero plugins**. It contains none of their behavior and gives them nothing beyond the narrow surfaces documented here.
+
+<Note>
+Plugins are entirely opt-in. The core does nothing a plugin does until a user installs that plugin and grants it the permissions it asks for. Everything not granted is denied by default.
+</Note>
+
+This page is the starting point for building one. If you only want to install and manage plugins as a user, see the [Plugins page](/docs/plugins) instead.
+
+## The two runtime kinds
+
+The first decision you make is which runtime kind you are building. There are two, plus a combined shape.
+
+| Kind | What it is | Best for | Language |
+|---|---|---|---|
+| `process` | A separate executable that runs beside the app and talks JSON-RPC over stdio | Background behavior: long-running loops, its own networking, work that should keep going whether or not any window is open | Any language that can read stdin and write stdout |
+| `ui` | A JavaScript module the app loads into its own interface | Interface features the user sees and operates: panels, title-bar buttons, popout windows, palette commands, hotkeys | TypeScript or JavaScript, bundled to one ES module |
+
+A third shape, **hybrid**, is a `process` plugin that also ships a `ui` module. The executable does the background work, and the module contributes the native controls and settings screen. Both halves install, enable, and disable as one plugin.
+
+### Choosing a kind
+
+<Steps>
+<Step title="Does it run in the background?">
+If the feature is something the app **does in the background** (mining, watching, polling, networking on a timer), build a `process` plugin.
+</Step>
+<Step title="Does the user see and touch it?">
+If the feature is something the user **sees and operates** (a panel, a button, a window, a command), build a `ui` plugin. See [UI plugins](/docs/plugin-ui).
+</Step>
+<Step title="Is it both?">
+A background worker with its own native controls and settings is a **hybrid**: a `process` plugin that also ships a `ui` module.
+</Step>
+</Steps>
+
+## Why behavior plugins run out-of-process
+
+A `process` plugin is a separate program, not a library loaded into the app. That is deliberate, for three concrete reasons.
+
+<CardGroup cols={3}>
+<Card title="Isolation" icon="gear">
+The OS process boundary is the strongest practical isolation. A crashing or misbehaving plugin cannot corrupt the app.
+</Card>
+<Card title="Own network stack" icon="plug">
+The plugin's network traffic originates from the plugin's own process. The core contains none of the endpoints, queries, or loops a plugin uses.
+</Card>
+<Card title="Any language" icon="terminal">
+A plugin can be written in any language that can read stdin and write stdout.
+</Card>
+</CardGroup>
+
+The deliberate omission that makes this work: **the host exposes no generic HTTP method.** A plugin that needs the network brings its own network stack. The host hands a plugin only events, a handful of read and display methods, and (with explicit per-use consent) a credential.
+
+<Info>
+That credential handoff is the single sensitive boundary crossing in the whole system. It is gated, logged, and revocable.
+</Info>
+
+## How the pieces fit
+
+Every plugin, regardless of kind, ships a `plugin.toml` manifest at the root of its folder. That file is the complete machine-readable statement of what the plugin is and what it may ask for. Anything not declared there is denied at runtime. Both kinds share the manifest, the marketplace, the signing chain, and the install and consent flow.
+
+A few terms recur throughout the rest of the docs.
+
+| Term | What it means |
+|---|---|
+| Host | The StreamNook app, which spawns and supervises plugins. |
+| Plugin | A separate executable (or a `ui` module) described by a manifest. |
+| Capability | A named permission a plugin declares in its manifest and a user grants at install. Anything not granted is denied by default. |
+| Credential broker | The host component that hands credentials to plugins, with first-use consent and an audit log. |
+| Index | A signed JSON document listing installable plugins. The official index lists a curated set. Heavier or specialized add-ons reach users through community indexes the user adds explicitly. |
+
+<Tip>
+Request only the capabilities you use. Every capability shows up in the consent dialog, and a plugin asking for more than it plausibly needs reads exactly that way to the user. See [Capabilities](/docs/plugin-capabilities) for the full vocabulary and the exact consent language.
+</Tip>
+
+The wire protocol is at version 1 and the surface is frozen. Breaking changes require a protocol version bump. Additive changes (new events, new optional fields, new capability strings) do not, and both sides ignore unknown fields. See the [protocol reference](/docs/api-protocol) for the wire format, lifecycle, full event and host-method list, and error codes. Signing, the index format, and key rotation are covered in [signing](/docs/plugin-signing).
+
+## Next steps
+
+<CardGroup cols={2}>
+<Card title="Quick start" icon="rocket" href="/docs/plugin-quickstart">
+Go from an empty folder to a plugin running inside StreamNook.
+</Card>
+<Card title="Manifest" icon="code" href="/docs/plugin-manifest">
+Every `plugin.toml` field and the tier definitions.
+</Card>
+<Card title="Capabilities" icon="gear" href="/docs/plugin-capabilities">
+The permission vocabulary, what each grants, and the consent text.
+</Card>
+<Card title="Protocol" icon="code" href="/docs/api-protocol">
+The wire format, events, host methods, and error codes.
+</Card>
+<Card title="UI plugins" icon="book" href="/docs/plugin-ui">
+The `ui` runtime kind, the `api` surface, slots, and build guidance.
+</Card>
+<Card title="Publishing" icon="plug" href="/docs/plugin-publishing">
+Sign your release and get it into an index.
+</Card>
+</CardGroup>

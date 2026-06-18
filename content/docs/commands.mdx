@@ -1,0 +1,119 @@
+---
+title: Chat Commands
+description: Every slash command StreamNook supports, plus autocomplete and custom commands.
+---
+
+StreamNook supports the full set of Twitch chat commands, adds its own client-side commands, and lets you define your own. Type `/` in the chat box to see autocomplete suggestions filtered to what you can use.
+
+## Autocomplete
+
+Type `/` and a panel lists matching commands with their syntax and a short description. Press `Tab` (or click) to insert one. The list is filtered by role, so moderator and broadcaster commands only show when you hold that role, and your own custom commands appear alongside the built-ins.
+
+## Everyone
+
+Available to any user.
+
+| Command | What it does |
+| --- | --- |
+| `/me <message>` | Send an action-style message. |
+| `/color <color>` | Change your username color (a name or hex value). |
+| `/block <user>` | Block a user. |
+| `/unblock <user>` | Unblock a user. |
+| `/w <user> <message>` | Send a whisper. |
+| `/mods` | List the channel's moderators. |
+| `/vips` | List the channel's VIPs. |
+| `/disconnect` | Disconnect from chat. |
+| `/help [command]` | Show command help. |
+
+## StreamNook commands
+
+Client-side commands unique to StreamNook.
+
+| Command | What it does |
+| --- | --- |
+| `/usercard <user>` (or `/user`) | Open a user's profile card. |
+| `/uptime` | Show the current stream's uptime. |
+| `/clearmessages` | Hide messages in your own view only (not a moderator clear). |
+| `/refresh` | Re-fetch the channel's emotes. |
+| `/reload` | Reconnect and reload the stream and chat. |
+| `/popup [channel]` | Open a channel's chat in a new StreamNook window. |
+| `/popout [channel]` | Open a channel's chat in your browser. |
+| `/openurl <url>` | Open a link in your browser. |
+
+## Chat modes (moderator)
+
+| Command | What it does |
+| --- | --- |
+| `/slow [seconds]` / `/slowoff` | Slow mode on (default 30s) or off. |
+| `/followers [duration]` / `/followersoff` | Followers-only mode on or off. |
+| `/subscribers` / `/subscribersoff` | Subscriber-only mode on or off. |
+| `/emoteonly` / `/emoteonlyoff` | Emote-only mode on or off. |
+| `/uniquechat` / `/uniquechatoff` | Unique chat (r9k) on or off. |
+| `/clear` | Clear the chat. |
+
+## Moderation (moderator)
+
+| Command | What it does |
+| --- | --- |
+| `/ban <user> [reason]` | Permanently ban a user. |
+| `/unban <user>` | Lift a ban or timeout. |
+| `/timeout <user> [seconds] [reason]` | Timeout a user (default 10 minutes). |
+| `/untimeout <user>` | Lift a timeout. |
+| `/banid <userID> [reason]` | Ban by numeric user ID (works on suspended accounts). |
+| `/warn <user> <reason>` | Send a formal warning. |
+| `/monitor` / `/unmonitor <user>` | Flag or unflag a user for monitoring. |
+| `/restrict` / `/unrestrict <user>` | Restrict or unrestrict a user's messages. |
+| `/mod <user>` / `/unmod <user>` | Grant or remove moderator. |
+| `/vip <user>` / `/unvip <user>` | Grant or remove VIP. |
+| `/shield` / `/shieldoff` | Turn Shield Mode on or off. |
+| `/nuke <pattern> <action> <past[:future]>` | Mass-moderate by phrase or regex. See [Moderation](/docs/moderation#mass-actions). |
+| `/undo` | Reverse the most recent `/nuke`. |
+
+## Broadcaster
+
+| Command | What it does |
+| --- | --- |
+| `/announce <message>` | Post a highlighted announcement. |
+| `/announceblue` / `/announcegreen` / `/announceorange` / `/announcepurple` | Announcement in a specific color. |
+| `/shoutout <user>` | Give another channel a shoutout. |
+| `/commercial [seconds]` | Run a commercial (30 to 180 seconds). |
+| `/marker [description]` | Drop a stream marker for VOD editing. |
+| `/raid <channel>` / `/unraid` | Start or cancel a raid. |
+
+Commands StreamNook does not handle itself (for example `/poll`, `/prediction`, `/gift`, `/goal`, `/vote`) are passed straight through to Twitch.
+
+## Custom commands
+
+Create your own commands in **Settings, Chat, Custom User Commands**. A custom command has a trigger and an expansion (the text it sends), and the expansion can pull in live values.
+
+### Variables
+
+| Variable | Becomes |
+| --- | --- |
+| `{1}`, `{2}`, `{3}` | The 1st, 2nd, 3rd word you typed after the trigger. |
+| `{1+}` or `{*}` | Everything from that word onward. |
+| `{user}` / `{user.id}` | Your display name / your Twitch id. |
+| `{channel}` / `{channel.id}` | The current channel's name / broadcaster id. |
+| `{stream.title}` | The current stream title. |
+| `{stream.game}` | The current category. |
+| `{stream.uptime}` | The current uptime, like "2h 14m". |
+| `{{` and `}}` | A literal `{` or `}`. |
+
+```text
+Trigger:   so
+Expansion: Shoutout to @{1}, check them out at twitch.tv/{1}
+
+You type:  /so jane
+Sends:     Shoutout to @jane, check them out at twitch.tv/jane
+```
+
+### Options
+
+- **Require a leading slash** (default on). Turn it off to let a plain word like `lurk` trigger the command.
+- **Also match at the end of a message** so the trigger can fire as the last word.
+
+Built-in command names are reserved and cannot be overridden by a custom command.
+
+<Card title="Next: Command palette" icon="terminal" href="/docs/command-palette">
+  Run anything from one search box.
+</Card>

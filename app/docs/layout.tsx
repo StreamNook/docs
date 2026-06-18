@@ -46,20 +46,6 @@ export default function DocsLayout({
                   {link.label}
                 </a>
               ))}
-              <span className="text-muted-foreground/50">|</span>
-              <span className="text-xs text-muted-foreground/70">For AI:</span>
-              <a
-                href="/llms.txt"
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
-              >
-                llms.txt
-              </a>
-              <a
-                href="/llms-full.txt"
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
-              >
-                llms-full.txt
-              </a>
             </div>
           </div>
         </div>

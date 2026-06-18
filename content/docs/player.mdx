@@ -1,0 +1,100 @@
+---
+title: Player and Controls
+description: Every player control, quality and latency option, and playback shortcut.
+---
+
+StreamNook's player handles live streams, VODs, and clips. Controls appear when you move the mouse and fade after a couple of seconds of no activity.
+
+## Opening a stream
+
+Click a channel in the sidebar, or use the in-app search to find any Twitch channel. The player loads the stream and chat connects automatically. To leave a stream, press `Shift+Q` or use the close button.
+
+## The control bar
+
+The control bar sits at the bottom of the player.
+
+| Control | What it does | Shortcut |
+| --- | --- | --- |
+| Play / Pause | Toggle playback. You can also click the video. | `Space` or `K` |
+| Mute / Unmute | Toggle audio. | `M` |
+| Volume | Adjust volume. | `Up` / `Down` |
+| Audio boost | Toggle the audio compressor and gain. Right-click for the full editor. | |
+| Settings (gear) | Quality, playback speed, and the stats panel. | |
+| Picture-in-picture | Pop the video into a floating window. | `P` |
+| Fullscreen | Enter or exit fullscreen. You can also double-click the video. | `F` |
+
+On VODs and clips you also get a scrub bar to seek. On live streams, use `Left` and `Right` to seek backward and forward by 10 seconds.
+
+## Quality
+
+Open the gear menu and choose **Quality**. On live streams you get every resolution the stream offers plus **Auto**, which adapts to your connection.
+
+- Set a **default quality** in **Settings, Player** so new streams start where you want.
+- If your preferred quality is not available on a stream, StreamNook plays the closest match and shows a small note saying what it switched to.
+
+## Latency
+
+For live streams you can trade buffer for how close to live you watch, in **Settings, Player**:
+
+- **Low Latency Target Mode** chooses the overall tradeoff: **Balanced**, **Latency**, or **Quality**.
+- **Live edge gap** sets how many seconds behind live you ride. Lower is closer to live but needs a stable connection.
+- The player gently catches up on its own when it falls behind, and recovers automatically from short stalls.
+
+<Tip>
+Open the gear menu and turn on **Stats** to see a live readout of how far behind live you are, your resolution, bitrate, dropped frames, and a **Go Live** button that snaps you back to the edge.
+</Tip>
+
+## Playback speed
+
+On VODs and clips, use the gear menu's **Speed** submenu, or `Shift+.` to speed up and `Shift+,` to slow down.
+
+## Audio boost
+
+Some streams are quiet. The audio boost button adds a compressor and makeup gain on top of the normal volume slider. Right-click the button (or open **Settings, Player, Audio Boost**) for fine control over threshold, ratio, attack, release, and makeup gain, with a one-click reset to defaults.
+
+## On-player buttons
+
+Hover the player to reveal action buttons in the corners. You can turn any of these on or off in **Settings, Player, Player Overlay Buttons**.
+
+| Button | Action | Shortcut |
+| --- | --- | --- |
+| Follow / Unfollow | Follow or unfollow the channel. | |
+| Subscribe / Gift | Open the Twitch subscription flow, or gift subs if already subscribed. | |
+| Create clip | Clip the recent moment of a live stream or VOD. | `Alt+X` |
+| Clips and VODs | Open the channel's clips and VOD library. | |
+| Add to multi-stream | Pull this stream into the multi-view grid. | |
+| Reload | Restart the stream and reconnect chat. | `R` |
+| Close | Stop the stream and return home. | `Shift+Q` |
+
+## When a stream goes offline
+
+If a channel you are watching goes offline, StreamNook can switch you to something else automatically. In **Settings, Player, Auto-Switch**:
+
+- Turn auto-switch on or off.
+- Choose to switch to **the same category** or to **your followed streams**.
+- Follow raids automatically.
+- Stay in the channel's offline chat instead of switching.
+
+If the broadcaster has VODs, the latest one can load so you can keep watching while chat stays open.
+
+## All player shortcuts
+
+| Action | Key |
+| --- | --- |
+| Play / pause | `Space` or `K` |
+| Mute | `M` |
+| Volume up / down | `Up` / `Down` |
+| Seek back / forward 10s | `Left` / `Right` |
+| Fullscreen | `F` |
+| Theater mode | `T` |
+| Picture-in-picture | `P` |
+| Speed up / down | `Shift+.` / `Shift+,` |
+| Create clip | `Alt+X` |
+| Restart stream | `R` |
+| Close stream | `Shift+Q` |
+
+Every shortcut is rebindable. See [Keyboard shortcuts](/docs/shortcuts).
+
+<Card title="Next: MultiNook" icon="code" href="/docs/multinook">
+  Watch several streams at once.
+</Card>

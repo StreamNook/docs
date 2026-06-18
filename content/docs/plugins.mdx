@@ -1,0 +1,70 @@
+---
+title: Plugins
+description: Discover, install, and manage optional StreamNook add-ons from the marketplace.
+---
+
+Plugins are optional add-ons that extend StreamNook with extra capabilities and community features. The core app stays lean, and you add exactly what you want.
+
+## What plugins can do
+
+A plugin can react to events (like a stream starting or a chat message arriving), add its own settings panel inside StreamNook, show notifications, supply a custom video source, or make its own network connections. Each plugin declares exactly which of these it uses, and you approve that when you install it.
+
+## Browse the marketplace
+
+Open the marketplace from the store icon in the title bar. Plugins are listed by source, with an icon, name, version, author, and a tier badge. Search by name and filter by source.
+
+The tier badge (Standard, Extended, or Advanced) describes how much a plugin can do, not how risky it is. **Official** plugins are built by the StreamNook team. Everything else in the curated index is community-made and has been approved for listing.
+
+## Install a plugin
+
+<Steps>
+  <Step title="Open the details">
+    Click a plugin to see its description, author, version, and capability summary.
+  </Step>
+  <Step title="Review capabilities">
+    The install screen lists, in plain language, exactly what the plugin can access, for example "knows which channel you are watching" or "adds a settings panel inside StreamNook." If a plugin uses your Twitch login or makes its own network connections, it says so.
+  </Step>
+  <Step title="Install">
+    Confirm to install. New plugins are added disabled, so nothing runs until you turn it on.
+  </Step>
+</Steps>
+
+## Manage installed plugins
+
+In the marketplace's installed view (and in **Settings, Plugins**) each plugin has:
+
+- An **enable / disable** toggle. Plugins run only while enabled.
+- A **Settings** button if the plugin has its own options. These use StreamNook's native controls, including channel pickers with avatars and live dots, not plain text boxes.
+- **View details** and **Uninstall**.
+- An **update** indicator when a newer version is available.
+
+## Custom sources
+
+Beyond the built-in source, you can add your own. Paste a source URL in the marketplace to add a community index. Plugins from it appear in their own section. Community sources that are not part of the curated index show a note reminding you to install only from sources you trust.
+
+## Privacy
+
+Plugins run as separate processes, isolated from the app. Anything that needs your Twitch login or its own network access has to ask for it up front and shows it in the capability list. Plugin settings are stored locally on your machine.
+
+## Building a plugin
+
+Want to make your own? StreamNook has a full plugin SDK and API. Start with [Building Plugins](/docs/plugin-overview) for the architecture, then the [Quick Start](/docs/plugin-quickstart) to get one running.
+
+<CardGroup cols={2}>
+  <Card title="Building Plugins" icon="plug" href="/docs/plugin-overview">
+    Architecture, runtime kinds, and how the system fits together.
+  </Card>
+  <Card title="Quick Start" icon="rocket" href="/docs/plugin-quickstart">
+    From an empty folder to a running plugin.
+  </Card>
+  <Card title="Protocol" icon="code" href="/docs/api-protocol">
+    The JSON-RPC API contract and full reference.
+  </Card>
+  <Card title="Publishing" icon="book" href="/docs/plugin-publishing">
+    Sign and submit your plugin to the index.
+  </Card>
+</CardGroup>
+
+<Card title="Next: Troubleshooting" icon="gear" href="/docs/troubleshooting">
+  Fixes for common problems.
+</Card>

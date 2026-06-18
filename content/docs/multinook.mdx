@@ -1,0 +1,87 @@
+---
+title: MultiNook
+description: Watch up to 25 streams at once, control audio, arrange tiles, and dock streams in the MultiNook grid.
+---
+
+MultiNook is StreamNook's multi-stream grid. It shows up to 25 streams at once in a layout that arranges itself, lets you pick which one you hear, and lets you rearrange, maximize, and dock tiles. Saved layouts (presets) have [their own page](/docs/multinook-presets), and the chat side is covered in [MultiChat](/docs/multichat).
+
+## Opening the grid
+
+Add the stream you are watching with the **Add to multi-stream** button on the player, which drops you into the grid. From there you keep adding more. The grid sizes every tile to make the best use of the space for the number of streams open.
+
+## The toolbar
+
+A toolbar runs across the top of the grid.
+
+| Control | What it does |
+| --- | --- |
+| **Browse** | Hide the grid and go back to browsing while streams keep playing. |
+| **Exit** | Leave the grid and stop all streams. |
+| **Add** (+) | Open the search box to add a stream. |
+| **Presets** | Open saved layouts. See [Presets](/docs/multinook-presets). |
+| **Resync** | Reload every tile at once if streams drift out of sync. |
+| **Mod view** | Show or hide the moderator log pane. |
+| **Chat** | Hide or show the chat panel for a cinematic, full-width grid. |
+
+The chat-hidden and mod-view choices are remembered between sessions.
+
+## Adding and removing streams
+
+<Steps>
+  <Step title="Open the search">
+    Click the **+** in the toolbar.
+  </Step>
+  <Step title="Pick or type a channel">
+    The box shows your followed channels that are live right now. Start typing to search all of Twitch instead. Use the arrow keys to move through results and Enter to add the highlighted one. You can also type a channel name directly and press Enter to add it even if it is not in the results.
+  </Step>
+  <Step title="Remove or dock">
+    Each tile has a close (X) button to remove it, and a dock button to tuck it away without closing it.
+  </Step>
+</Steps>
+
+The first stream you add plays sound; the rest start muted. You cannot add the same channel twice, and the grid holds up to 25 streams.
+
+## Choosing what you hear
+
+Click a tile's body (not a button) to **focus** it. The focused tile unmutes and every other tile mutes, so you always hear exactly one stream. A soft glow marks the focused tile. Click it again to clear focus and unmute the visible tiles. Focusing a tile also points the chat panel at that channel.
+
+Each tile also has its own volume slider and mute button in its player controls for finer control.
+
+## Arranging tiles
+
+- **Reorder:** grab a tile's drag handle (top center) and drag it to a new spot. The grid reflows around it.
+- **Maximize:** double-click a tile (or use its maximize button) to fill the whole grid with it. Press `Esc` or double-click again to restore. The other streams keep running in the background, so restoring is instant.
+- **Fullscreen:** each tile's own player controls can go fully fullscreen.
+
+## Docking streams
+
+Docking minimizes a tile into a small pill in the toolbar instead of closing it. Drag a tile up to the toolbar, or use its dock button.
+
+- Docked streams stay loaded and muted, so bringing one back is instant.
+- Click a pill to swap that stream back into the grid in place of the focused tile.
+- Drag a pill back onto the grid to restore it to its spot.
+
+## Per-tile quality and resync
+
+- The focused tile's gear menu has a **Quality** submenu, so you can drop a busy tile to a lower resolution.
+- The toolbar **Resync** button reloads every tile at once to line them back up.
+
+## When a tile is offline
+
+If a stream is offline or unreachable, its tile shows the channel's avatar with **Retry** and **Hide** buttons. Retry re-attempts that one stream; Hide docks it.
+
+## First time in
+
+On an empty grid, an interactive tutorial walks you through adding streams, audio focus, drag-and-drop, docking, chat control, and resync. It disappears as soon as you add a real stream.
+
+## Discord presence
+
+While a grid is open, StreamNook can show what you are watching on your Discord profile, including the stream count and the shared game. Turn it on in **Settings, Integrations, Discord Rich Presence**.
+
+## What is remembered
+
+Your grid (the channels, their volume and mute state, and quality), the chat-hidden toggle, your presets, and any equipped preset are saved and restored when you reopen the app.
+
+<Card title="Next: Presets" icon="book" href="/docs/multinook-presets">
+  Save and reopen your favorite grids.
+</Card>

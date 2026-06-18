@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback, TouchEvent, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { siteConfig } from '@/lib/theme-config'
@@ -127,8 +128,15 @@ export function MobileSidebar({ tree, isOpen, onClose }: MobileSidebarProps) {
       >
         {/* Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-border">
-          <Link href="/" className="font-semibold text-lg" onClick={onClose}>
-            {siteConfig.name}
+          <Link href="/" className="flex items-center" onClick={onClose} aria-label={siteConfig.logo.alt}>
+            {siteConfig.logo.src && (
+              <Image
+                src={siteConfig.logo.src}
+                alt={siteConfig.logo.alt}
+                width={siteConfig.logo.width}
+                height={siteConfig.logo.height}
+              />
+            )}
           </Link>
           <button
             onClick={onClose}

@@ -1,0 +1,144 @@
+---
+title: Capabilities and Consent
+description: The permission vocabulary, the exact consent text users see, and how credential handover works.
+---
+
+## Default deny
+
+A plugin gets exactly what its manifest lists and the user grants, nothing else. The host enforces this by not answering ungranted requests and never emitting unsubscribed events. Capabilities are deliberately coarse so the consent dialog can show them verbatim and a non-technical user can understand what they are agreeing to.
+
+<Info>
+Capabilities a plugin wants are declared in its [manifest](/docs/plugin-manifest). What a plugin can actually do at runtime comes from the granted set, which is the manifest intersected with what the user approved.
+</Info>
+
+## Capability vocabulary and rendered consent strings
+
+The consent dialog renders one line per granted capability, using exactly these strings.
+
+### Events
+
+| Capability | Rendered line |
+|---|---|
+| `events: on_stream_start`, `on_stream_stop`, `on_channel_change`, `on_watch_tick` | "Knows which channel you are watching" |
+| `events: on_followed_live` | "Sees which channels you follow are live" |
+| `events: on_chat_message` | "Sees chat messages in channels you open" |
+| `events: on_settings_change` | "Is told when certain app settings change" |
+| `events: on_panel_change` | Covered by the settings panel line below |
+
+The four watch-related events render as a single combined line when any of them is granted, to avoid a wall of near-duplicates.
+
+See [Events](/docs/api-events) for the full event payloads.
+
+### Host methods
+
+| Capability | Rendered line |
+|---|---|
+| `host_methods: get_followed_live` | "Can ask for your list of live followed channels" |
+| `host_methods: set_upstream` | "Can supply the video source the player uses" |
+| `host_methods: notify` | "Can show you notifications" |
+| `host_methods: log` | Not rendered (local diagnostics only) |
+| `host_methods: register_panel`, `get_panel_values` | "Adds a settings panel inside StreamNook" |
+
+See [Host methods](/docs/api-host-methods) for the call signatures.
+
+### Credentials
+
+| Capability | Rendered line |
+|---|---|
+| `credentials: twitch.android` | "Can request your Twitch login token. With it, this plugin can act as your Twitch account" |
+
+Credential lines render in warning color in every tier. Granting the capability at install does not hand over the credential. The first actual request triggers its own prompt (see below).
+
+### Network
+
+| Capability | Rendered line |
+|---|---|
+| `network: external` | "Makes its own network connections, to Twitch and elsewhere. StreamNook does not see or control this traffic" |
+| `network: none` | "Declares that it makes no network connections of its own" |
+
+### UI
+
+| Capability | Rendered line |
+|---|---|
+| `ui: panel` | "Adds a settings panel inside StreamNook" |
+
+## Consent flow
+
+One calm, capability-focused dialog for every plugin, regardless of tier. The tier is quiet curation metadata. It renders as a neutral capability-scope badge ("Standard", "Extended", "Advanced"), never a risk rating.
+
+The install / enable dialog shows:
+
+- The plugin name, author, version, and tier badge.
+- One line: "This add-on runs as its own program alongside StreamNook. It can do the following:"
+- The capability lines from the granted set (the login-access line, when present, is rendered with mild emphasis because it is the most powerful capability).
+- For an add-on from a community source, one neutral note: "Community sources aren't reviewed by StreamNook. Install add-ons from sources you trust."
+- Buttons: "Cancel" and "Install" (or "Enable").
+
+No tier-specific warnings, no "account suspension" copy, no acknowledgment checkbox. The capability list is the contract: what the add-on can do is stated plainly and the user confirms. The separate first-credential-handover prompt (below) is the checkpoint for actually handing over the login token.
+
+<Note>
+The tier badge is a neutral capability-scope label, not a risk rating. "Standard", "Extended", and "Advanced" describe how much the add-on can reach, and the dialog stays calm and capability-focused throughout.
+</Note>
+
+### First credential handover (any plugin)
+
+Triggered by the plugin's first `get_credential` call for a kind in a session, independent of install-time grants:
+
+> **`{name}` is asking to use your Twitch login.**
+>
+> If you allow this, the plugin receives a token that lets it act as your Twitch account: watching, claiming, and anything else that login can do. StreamNook records every time a credential is handed to a plugin.
+
+Buttons: "Allow", "Allow and don't ask again", "Deny". "Deny" fails the call with `consent_denied`. "Allow and don't ask again" persists until revoked.
+
+<Warning>
+Granting the credential capability at install does not hand over your login token. The token is only released on the first `get_credential` call, behind this separate prompt, and that handover is what lets a plugin act as your Twitch account. Every handover is recorded in a local, user-viewable audit log.
+</Warning>
+
+### Revocation
+
+The plugins page lists each installed plugin with its tier badge, capability summary, an enable toggle, and a "Revoke credential access" action where applicable. Revocation takes effect immediately: subsequent `get_credential` calls fail with `consent_denied`. Disabling a plugin shuts its process down. The audit log of credential handovers is viewable per plugin.
+
+## Adding a community source
+
+Adding a source is itself a consented action:
+
+> **Add a community plugin source?**
+>
+> `{source URL}`
+>
+> StreamNook doesn't review or host what community sources list, so add ones you trust. The source operator's key fingerprint is shown below; future updates from this source must be signed with the same key.
+>
+> `{fingerprint}`
+
+Buttons: "Add source", "Cancel".
+
+<Tip>
+The key fingerprint pins the source. Future updates must be [signed](/docs/plugin-signing) with the same key, so a source cannot silently swap in a different operator's content later.
+</Tip>
+
+## Rules the host follows
+
+<Check>Capability lines render from the granted set, not the requested set, everywhere they appear after install.</Check>
+<Check>The consent dialog stays calm and capability-focused; the tier badge is neutral, not a risk label.</Check>
+<Check>The consent dialog shows author, version, tier badge, and source for every install and every update that adds capabilities. An update that requests new capabilities re-runs the consent flow.</Check>
+<Check>Credential handovers are appended to a per-plugin audit log with timestamp and credential kind. The log is local and user-viewable.</Check>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Plugin manifest" icon="gear" href="/docs/plugin-manifest">
+    Where a plugin declares the capabilities it wants.
+  </Card>
+  <Card title="Host methods" icon="plug" href="/docs/api-host-methods">
+    The methods a plugin can call once granted.
+  </Card>
+  <Card title="Events" icon="code" href="/docs/api-events">
+    The events a plugin can subscribe to.
+  </Card>
+  <Card title="Plugin signing" icon="terminal" href="/docs/plugin-signing">
+    How sources and updates are key-pinned.
+  </Card>
+  <Card title="Plugins overview" icon="book" href="/docs/plugins">
+    The plugin system at a glance.
+  </Card>
+</CardGroup>

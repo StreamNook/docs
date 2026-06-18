@@ -1,0 +1,108 @@
+---
+title: Moderation
+description: Every moderator and broadcaster tool in StreamNook, from per-message actions to mass actions.
+---
+
+If you are a moderator or the broadcaster in a channel, StreamNook gives you a full moderation toolkit: per-message actions, keyboard moderation, drag-to-moderate, room controls, a live mod log, and mass actions. All actions are permission-gated by Twitch, so they only work where you actually hold the role.
+
+There are several ways to do most actions (a button, a key, a drag, or a slash command), so you can use whichever fits your flow.
+
+## Per-message actions
+
+Hover a message to reveal its action dock.
+
+| Action | How | Notes |
+| --- | --- | --- |
+| Copy | Copy icon | Available to everyone, not just mods. |
+| Pin / Unpin | Pin icon | Pin a message to the top of chat. Click again to unpin. |
+| Delete | Trash icon | Removes the single message. |
+| Timeout | Clock icon | Quick timeout with a duration menu (1s purge, 10m, 1h, 24h). |
+| Ban | X icon | Permanent until unbanned. |
+
+## Keyboard moderation
+
+Press `J` to start, then move a focus highlight through messages and act without the mouse. This is the fastest way to moderate a busy chat.
+
+| Action | Key |
+| --- | --- |
+| Focus newer / older message | `J` / `K` |
+| Open the focused user's card | `U` |
+| Delete the focused message | `Delete` |
+| Timeout: 1s purge / 10m / 1h | `1` / `2` / `3` |
+| Ban / unban | `B` / `A` |
+| Clear focus | `Esc` |
+
+All of these are rebindable in **Settings, Keybindings**.
+
+## Drag to moderate
+
+Instead of buttons, you can drag a message onto an action. Grab a message and drop it on a target:
+
+- **Delete**, **Ban**, and **Timeout** targets for punitive actions.
+- **Unban / Untimeout** appears when the user is already banned or timed out.
+- **Pin**, **Profile**, and **Whisper** targets for non-punitive actions (Profile and Whisper work for everyone).
+
+The timeout target is continuous: the further you drag, the longer the timeout, snapped to clean values up to a maximum of 14 days, with the duration shown live as you drag.
+
+Choose the layout in **Settings, Moderation, Action Style**:
+
+- **Buttons:** the classic hover dock (text stays selectable).
+- **Drag:** drag messages onto action targets (beside chat or above chat).
+- **Both:** enable both methods.
+
+## The moderator menu
+
+Click the shield icon in the chat toolbar to open room controls.
+
+| Control | Options |
+| --- | --- |
+| Emote-only mode | On / off |
+| Followers-only mode | On / off, with an optional minimum follow time |
+| Subscriber-only mode | On / off |
+| Slow mode | Off, or a set number of seconds between messages |
+| Unique chat (r9k) | On / off |
+| Clear chat | Wipes all messages (asks to confirm) |
+
+The same menu has shortcuts to show the mod log, manage the channel's 7TV emotes, and open the full moderation settings.
+
+## Mod log
+
+The mod log is a live feed of moderation activity for every channel you have open. Turn it on from the moderator menu or **Settings, Moderation**.
+
+- Each entry shows the action, duration, the moderator and target, a message snippet, and a timestamp.
+- Actions are color-coded by category (bans, timeouts, deletions, warnings, reversals, roles, chat modes).
+- With two or more channels open it can split into one column per channel, or stay a combined list.
+- History is saved per channel and restored when you reopen it.
+
+Customize the highlight style (box, bar, or dot) and the per-category colors in **Settings, Moderation**.
+
+## Mass actions
+
+Two commands handle spam waves and raids in bulk:
+
+- **`/nuke <pattern> <action> <past[:future]>`** acts on every message matching a phrase or `/regex/`. The action is `delete`, `ban`, or a timeout duration. `past` is how far back to scan; the optional `future` keeps applying the action to new matches for that long.
+- **`/undo`** reverses the most recent `/nuke` on the channel. Timeouts and bans are reversed; deletions cannot be recovered.
+
+```text
+/nuke spam ban 5m:1m
+```
+Bans everyone who said "spam" in the last 5 minutes, then keeps banning new matches for 1 minute.
+
+## How moderated messages look
+
+When a message is removed, it shows struck through by default. You can change this in **Settings, Moderation**:
+
+- Hide the strikethrough and remove moderated messages entirely.
+- Announce mod actions inline as a system row.
+
+## Settings
+
+**Settings, Moderation** holds the action style, drag layout, pin behavior, mod log visibility and styling, category colors, and the message-appearance options. See the [Settings reference](/docs/settings#moderation).
+
+## Every moderation command
+
+All moderator and broadcaster slash commands (bans, timeouts, roles, raids, shield mode, announcements, and more) are listed on the [Chat commands](/docs/commands) page.
+
+<Card title="Next: Chat commands" icon="terminal" href="/docs/commands">
+  The full slash command reference.
+</Card>

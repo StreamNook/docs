@@ -39,17 +39,15 @@ export function DocsHeader({ tree }: DocsHeaderProps) {
               </button>
 
               {/* Logo */}
-              <Link href="/" className="flex items-center gap-2">
+              <Link href="/" className="flex items-center" aria-label={siteConfig.logo.alt}>
                 {siteConfig.logo.src && (
                   <Image
                     src={siteConfig.logo.src}
                     alt={siteConfig.logo.alt}
                     width={siteConfig.logo.width}
                     height={siteConfig.logo.height}
-                    className="dark:invert"
                   />
                 )}
-                <span className="font-semibold text-lg hidden sm:inline">{siteConfig.name}</span>
               </Link>
             </div>
 

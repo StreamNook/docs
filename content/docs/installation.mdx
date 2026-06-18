@@ -1,0 +1,51 @@
+---
+title: Installation
+description: Download, extract, and run StreamNook on Windows.
+---
+
+StreamNook is a portable Windows app. There is no installer: you download an archive, extract it, and run the executable. Nothing is written to Program Files, and you can move or delete the folder whenever you want.
+
+## Download and run
+
+<Steps>
+  <Step title="Download the archive">
+    Get the latest build from the [StreamNook website](https://streamnook.app) or the [GitHub Releases page](https://github.com/winters27/StreamNook/releases). The download is `StreamNook.7z`. Always use the newest release.
+  </Step>
+  <Step title="Extract it">
+    Extract `StreamNook.7z` to a folder you want to keep it in, not your Downloads folder, since you run the app from wherever you put it. Windows 11 can open `.7z` archives directly; on older Windows use a tool like 7-Zip or NanaZip.
+  </Step>
+  <Step title="Run StreamNook">
+    Open the extracted folder and run **StreamNook.exe**. That is the whole app. To launch it quickly later, right-click the exe and pin it to Start or the taskbar, or make a desktop shortcut.
+  </Step>
+</Steps>
+
+<Note>
+Because the app is not code-signed yet, Windows SmartScreen may show an "unrecognized app" warning the first time you run it. Choose **More info**, then **Run anyway**. This goes away once Windows knows the app.
+</Note>
+
+<Tip>
+The release also includes `checksums.txt`. If you want to confirm your download is intact, compare the SHA-256 of `StreamNook.7z` against the value in that file (`certutil -hashfile StreamNook.7z SHA256` in a terminal).
+</Tip>
+
+## System requirements
+
+- **OS:** Windows 10 or Windows 11.
+- **Runtime:** WebView2, which is preinstalled on current Windows. StreamNook prompts you to install it if it is missing.
+- **Disk:** the app folder plus a cache for emotes and badges that grows over time. You can clear the cache anytime from **Settings, Cache**.
+
+## Updates
+
+StreamNook does not update itself. When a new version is available, an **update button appears at the top of the window**. Click it to download the newest version, then install it the same way as the first time: extract the archive and run the new `StreamNook.exe`. You can replace your existing folder, and your settings and sign-in are kept because they live in your user profile, not the app folder.
+
+You can manage update notifications in **Settings, Notifications**. To see what changed in any version, open **Settings, What's New**, or press `Ctrl+Shift+C`.
+
+## Where your data lives
+
+Your settings, cache, and sign-in are stored in your Windows user profile, not in the app folder. That means you can move the folder, replace it with a newer build, or delete and re-extract it without losing anything.
+
+- Open your settings folder anytime from **Settings, Backup, Open Settings Folder**.
+- Export your settings to a `.json` file, or import one, from the same tab. This is the easiest way to carry StreamNook to a new PC.
+
+<Card title="Next: First launch" icon="rocket" href="/docs/first-run">
+  Sign in with Twitch and finish setup.
+</Card>

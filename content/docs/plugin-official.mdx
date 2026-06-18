@@ -1,0 +1,82 @@
+---
+title: Official Plugins
+description: What makes a plugin official, what the official index lists, and first-party branding.
+---
+
+This page covers what "official" means for a StreamNook plugin, how first-party plugins are branded, and what the official index does and does not list.
+
+## Definition
+
+An official plugin is one that meets all three of these conditions:
+
+<Steps>
+  <Step title="Authored and maintained by StreamNook">
+    The plugin is built and kept up to date by the StreamNook project itself.
+  </Step>
+  <Step title="Signed by the StreamNook author key">
+    The release is signed by the project's plugin author key. See [Signing](/docs/plugin-signing) for how key pinning works.
+  </Step>
+  <Step title="Listed in the official index">
+    The plugin appears in the index the app trusts out of the box.
+  </Step>
+</Steps>
+
+<Warning>
+All three conditions must hold. A fork of an official plugin signed by someone else is not official. Key pinning (see [Signing](/docs/plugin-signing)) is what makes that distinction enforceable rather than cosmetic.
+</Warning>
+
+## Scope of the official index
+
+The official index lists the curated A and B tiers only. The host enforces this: a tier C entry placed in the official index is ignored.
+
+The official set is the focused, first-party collection. Heavier or specialized add-ons (such as background drops and points automation, or ad-bypass resolution) are tier C. They are community-distributed, published under their authors' own identity, and not part of the first-party set. Keeping them out of the official index keeps that set focused and first-party, the same reason the core itself stays lean.
+
+<Info>
+What is official: emote and badge providers, chat tools, overlays, notifiers, integrations, and similar A and B functionality.
+</Info>
+
+Tiers are neutral capability scopes. For what each tier is allowed to do, see [Capabilities](/docs/plugin-capabilities).
+
+## Branding conventions
+
+<CardGroup cols={2}>
+  <Card title="Id namespace" icon="plug">
+    Official plugins use `app.streamnook.<name>`, for example `app.streamnook.example-tick`.
+  </Card>
+  <Card title="Author and verified mark" icon="book">
+    Author is `StreamNook`, with `verified: true` in the official index entry.
+  </Card>
+</CardGroup>
+
+- Community plugins must not use the `app.streamnook.` prefix. The official index curator rejects it from third parties, and its presence outside the official index is a red flag the UI may surface.
+- The UI derives the official presentation (the badge on the source, the verified mark on the author) from the index and pinned keys, never from the manifest alone. A manifest cannot self-declare officialness.
+
+<Note>
+Marketplace presentation: every official entry should carry `icon_url`, `readme_url`, and an accurate `updated_at`, so official plugins set the quality bar for detail pages. See [Manifest](/docs/plugin-manifest) for these fields.
+</Note>
+
+## Repository and release shape (per plugin)
+
+Each official plugin lives in its own repository with this layout:
+
+```text
+streamnook-plugin-<name>/
+├── README.md          (drives the marketplace detail page via readme_url)
+├── plugin.toml
+├── src/ ...
+└── release: <id>-<version>.zip + .zip.minisig
+```
+
+The README leads with what the plugin does and a screenshot. The marketplace renders it as plain markdown (no HTML).
+
+<Tip>
+For how releases are built, signed, and listed, see [Publishing](/docs/plugin-publishing).
+</Tip>
+
+## Project keys
+
+Two project keys back the official set: the index operator key and the plugin author key. Both are generated and held by the project owner, never in CI or the repository. They are minisign keypairs, and their public halves are pinned in the app (for the official index) and in the index (for the plugin author), respectively. See [Signing](/docs/plugin-signing) for the pinning details.
+
+<Check>
+An official plugin is authored by StreamNook, signed by the StreamNook key, and listed in the official index. All three, verified against pinned keys, not the manifest.
+</Check>

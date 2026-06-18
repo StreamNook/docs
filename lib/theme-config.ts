@@ -7,32 +7,33 @@
 
 export const siteConfig = {
   // Site metadata
-  name: 'streamnook-docs',
-  description: 'Documentation for my project',
-  url: 'https://docs.example.com',
+  name: 'StreamNook Docs',
+  description: 'The complete guide to StreamNook, the desktop Twitch viewing client.',
+  url: 'https://docs.streamnook.app',
 
   // Logo configuration
   logo: {
-    src: '/logo.svg',
-    alt: 'Unmint',
-    width: 40,
-    height: 40,
+    src: '/logo.png',
+    alt: 'StreamNook',
+    width: 32,
+    height: 36,
   },
 
   // Navigation links
   links: {
-    github: 'https://github.com/your-org/your-repo',
-    discord: 'https://discord.gg/your-invite',
-    twitter: 'https://twitter.com/yourhandle',
-    support: 'mailto:support@example.com',
+    github: 'https://github.com/winters27/StreamNook',
+    discord: 'https://discord.gg/2xvuF9TES7',
+    support: 'https://streamnook.app/support',
+    website: 'https://streamnook.app',
   },
 
   // Footer configuration
   footer: {
-    copyright: '© 2025 Your Company. All rights reserved.',
+    copyright: '© 2026 StreamNook',
     links: [
-      { label: 'Website', href: 'https://example.com' },
-      { label: 'GitHub', href: 'https://github.com/your-org' },
+      { label: 'Website', href: 'https://streamnook.app' },
+      { label: 'Download', href: 'https://streamnook.app' },
+      { label: 'GitHub', href: 'https://github.com/winters27/StreamNook' },
     ],
   },
 }
@@ -42,15 +43,15 @@ export const themeConfig = {
   colors: {
     // Light mode
     light: {
-      accent: '#0891b2',        // Primary accent color
+      accent: '#5b7a82',        // StreamNook accent, darkened for light backgrounds
       accentForeground: '#ffffff',
-      accentMuted: 'rgba(8, 145, 178, 0.1)',
+      accentMuted: 'rgba(91, 122, 130, 0.1)',
     },
     // Dark mode
     dark: {
-      accent: '#22d3ee',        // Brighter for dark backgrounds
-      accentForeground: '#0f172a',
-      accentMuted: 'rgba(34, 211, 238, 0.1)',
+      accent: '#97b1b9',        // StreamNook accent
+      accentForeground: '#0c0c0d',
+      accentMuted: 'rgba(151, 177, 185, 0.12)',
     },
   },
 
@@ -69,12 +70,12 @@ export const themeConfig = {
   // OG Image generation settings
   ogImage: {
     // Gradient background (CSS gradient string)
-    gradient: 'linear-gradient(135deg, #ffffff 0%, #e0f7fa 50%, #67e8f9 100%)',
+    gradient: 'linear-gradient(135deg, #0c0c0d 0%, #15171a 60%, #1d2226 100%)',
     // Text colors
-    titleColor: '#0f172a',
-    sectionColor: '#0891b2',
+    titleColor: '#f5f5f6',
+    sectionColor: '#97b1b9',
     // Logo URL (absolute URL required for OG images)
-    logoUrl: 'https://example.com/logo.png',
+    logoUrl: 'https://docs.streamnook.app/logo.png',
   },
 }
 

@@ -1,7 +1,7 @@
 {
   "name": "streamnook-docs",
   "version": "0.1.0",
-  "description": "Documentation for my project",
+  "description": "StreamNook documentation site",
   "private": true,
   "scripts": {
     "dev": "next dev",

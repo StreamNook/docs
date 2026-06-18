@@ -1,0 +1,428 @@
+---
+title: Quick Start
+description: From an empty folder to a plugin running inside StreamNook, for both runtime kinds.
+---
+
+This is a start-to-finish walkthrough: from an empty folder to a plugin running inside StreamNook. There are two runtime kinds, and the first decision you make is which one you are building. Pick the path that matches your feature, then follow it top to bottom.
+
+## Before you start
+
+You need:
+
+- A working StreamNook build you can run (the dev build for plugin work). You will register your plugin folder through Settings, Plugins, Develop, which gives you the real install and consent behavior with no packaging.
+- For a `process` plugin: a toolchain for your language (Node, Rust, Go, Python, anything that does stdio).
+- For a `ui` plugin: Node and esbuild for bundling.
+- For publishing later: [minisign](https://jedisct1.github.io/minisign/) to sign your release. See [Publishing](/docs/plugin-publishing).
+
+Every plugin, regardless of kind, ships a `plugin.toml` manifest at the root of its folder. That file is the complete machine-readable statement of what the plugin is and what it may ask for. Anything not declared there is denied at runtime. The full field reference is in [Manifest](/docs/plugin-manifest).
+
+<Info>
+Not sure which kind to build? Build a `process` plugin if the feature is something the app does in the background (mining, watching, polling, networking on a timer). Build a `ui` plugin if the feature is something the user sees and touches (a panel, a button, a window, a command). If it is both, build a hybrid (covered at the end).
+</Info>
+
+<Tabs items={["Process plugin", "UI plugin"]}>
+
+<Tab value="Process plugin">
+
+## Build a process plugin
+
+We will build a minimal plugin that logs a line every time the watch tick fires and registers a settings panel. It is the smallest thing that exercises the whole lifecycle.
+
+### The folder
+
+```text
+my-plugin/
+├── plugin.toml      the manifest
+├── main.js          your code
+└── plugin.cmd       a launcher (Windows), optional but convenient
+```
+
+### The manifest
+
+```toml
+id          = "yourhandle.my-plugin"
+name        = "My Plugin"
+version     = "0.1.0"
+author      = "yourhandle"
+tier        = "A"
+description = "Logs watch ticks and adds a settings panel."
+host_min    = "7.0.0"
+
+[runtime]
+kind      = "process"
+entry     = "plugin.cmd"
+args      = []
+transport = "stdio"
+
+[capabilities]
+events       = ["on_watch_tick", "on_followed_live", "on_panel_change"]
+host_methods = ["notify", "log", "register_panel", "get_panel_values"]
+credentials  = []
+network      = "none"
+ui           = ["panel"]
+```
+
+Key points:
+
+- `id` is a unique, dotted namespace that never changes across versions. It is lowercase with at least two dot-separated segments (it matches `^[a-z0-9]+(\.[a-z0-9-]+)+$`). You do not need a domain or website: a handle plus the plugin name works, like `yourhandle.my-plugin`. Just pick something unlikely to collide with anyone else. Do not use the `app.streamnook.` prefix; that is reserved for first-party plugins.
+- `entry` is the program the host spawns, relative to the plugin folder. No `..`, no absolute paths. On Windows a one-line `.cmd` launcher is the simplest way to run an interpreted script:
+
+```bat
+@echo off
+node "%~dp0main.js"
+```
+
+- `[capabilities]` is the whole permission contract. Request only what you use. Every line shows up in the consent dialog, and a plugin asking for more than it plausibly needs reads exactly the way you would expect it to. See [Capabilities](/docs/plugin-capabilities).
+- `network = "none"` is a promise. The host cannot stop a separate process from using the network, so this field states intent to the user. A plugin observed networking despite declaring `none` is grounds for removal from an index.
+
+### The protocol loop
+
+Communication is JSON-RPC 2.0 over stdin/stdout. Each message is one JSON envelope, framed with a byte-length header:
+
+```text
+Content-Length: <byte count>\r\n
+\r\n
+<exactly that many bytes of UTF-8 JSON>
+```
+
+stderr is yours for free-form output; the host captures it to your log file. Here is the complete minimal plugin in Node. Read it top to bottom once; the comments mark every required piece.
+
+```js
+'use strict';
+
+let buffer = Buffer.alloc(0);
+let nextId = 1;
+const pending = new Map();
+
+// --- framing: write one Content-Length-framed JSON envelope ---
+function writeFrame(message) {
+  const body = Buffer.from(JSON.stringify(message), 'utf8');
+  process.stdout.write(`Content-Length: ${body.length}\r\n\r\n`);
+  process.stdout.write(body);
+}
+function respond(id, result) { writeFrame({ jsonrpc: '2.0', id, result }); }
+function notifyHost(method, params) { writeFrame({ jsonrpc: '2.0', method, params }); }
+function request(method, params) {
+  return new Promise((resolve, reject) => {
+    const id = nextId++;
+    pending.set(id, { resolve, reject });
+    writeFrame({ jsonrpc: '2.0', id, method, params });
+  });
+}
+function log(level, message) { notifyHost('log', { level, message }); }
+
+// --- a settings panel the host renders for us ---
+const PANEL = {
+  title: 'My Plugin',
+  sections: [{
+    label: 'Behavior',
+    fields: [
+      { key: 'chatty', type: 'toggle', label: 'Log every tick', default: true },
+    ],
+  }],
+};
+let chatty = true;
+
+// runs after the host sends `initialized`
+async function onInitialized() {
+  await request('register_panel', { schema: PANEL });
+  const panel = await request('get_panel_values', {});
+  if (panel?.values && typeof panel.values.chatty === 'boolean') chatty = panel.values.chatty;
+  await request('notify', { level: 'info', message: 'My Plugin started' });
+}
+
+function handleMessage(message) {
+  // a response to one of our own requests
+  if (message.id !== undefined && message.method === undefined) {
+    const waiter = pending.get(message.id);
+    if (waiter) {
+      pending.delete(message.id);
+      message.error ? waiter.reject(new Error(JSON.stringify(message.error))) : waiter.resolve(message.result);
+    }
+    return;
+  }
+  // a request or notification from the host
+  switch (message.method) {
+    case 'initialize':
+      // declare our version and the events we actually want delivered
+      respond(message.id, { plugin_version: '0.1.0', hooks: ['on_watch_tick', 'on_followed_live', 'on_panel_change'] });
+      break;
+    case 'initialized': onInitialized(); break;
+    case 'ping':        respond(message.id, {}); break;
+    case 'shutdown':    respond(message.id, null); break;
+    case 'exit':        process.exit(0); break;
+    case 'on_watch_tick':
+      if (chatty) log('info', `tick, active channel: ${message.params?.active_channel_id || 'none'}`);
+      break;
+    case 'on_followed_live':
+      log('info', `followed live: ${(message.params?.channels || []).length} channels`);
+      break;
+    case 'on_panel_change':
+      if (typeof message.params?.values?.chatty === 'boolean') chatty = message.params.values.chatty;
+      break;
+    default:
+      // unknown request -> method not found; unknown notification -> ignore
+      if (message.id !== undefined) {
+        writeFrame({ jsonrpc: '2.0', id: message.id, error: { code: -32601, message: `method not found: ${message.method}` } });
+      }
+  }
+}
+
+// --- read stdin, split frames on Content-Length, dispatch each ---
+process.stdin.on('data', (chunk) => {
+  buffer = Buffer.concat([buffer, chunk]);
+  for (;;) {
+    const headerEnd = buffer.indexOf('\r\n\r\n');
+    if (headerEnd === -1) return;
+    const match = /content-length:\s*(\d+)/i.exec(buffer.slice(0, headerEnd).toString('utf8'));
+    if (!match) process.exit(1);
+    const frameEnd = headerEnd + 4 + parseInt(match[1], 10);
+    if (buffer.length < frameEnd) return;
+    const body = buffer.slice(headerEnd + 4, frameEnd).toString('utf8');
+    buffer = buffer.slice(frameEnd);
+    try { handleMessage(JSON.parse(body)); } catch (err) { process.stderr.write(`bad frame: ${err}\n`); }
+  }
+});
+process.stdin.on('end', () => process.exit(0));
+```
+
+The full payloads, event shapes, and error codes are in [Protocol](/docs/api-protocol) and [Events](/docs/api-events).
+
+### The lifecycle you must honor
+
+This is the contract every `process` plugin lives by. Get these five things right and the rest is your own logic.
+
+<Steps>
+
+<Step title="Handshake">
+The host sends `initialize`. You must respond with `{ plugin_version, hooks }`. `hooks` is the subset of events you want delivered; it must be a subset of what your manifest requested and the user granted. Then the host sends the `initialized` notification, and event delivery begins. Do your startup work (register a panel, read its values, build initial state) in response to `initialized`, not `initialize`.
+
+<Warning>
+You must respond to `initialize` within 10 seconds. Do not do slow startup work before responding; do it on `initialized`. Missing the deadline kills the plugin.
+</Warning>
+</Step>
+
+<Step title="Granted is a subset">
+The `initialize` request carries a `granted` object: the capabilities the user actually approved, which may be fewer than you requested. Your plugin must work with any subset. Degrade or report through `log`, never crash.
+</Step>
+
+<Step title="Health">
+The host pings you every 30 seconds; respond with `{}`. Three missed pings and the host restarts you. More than three restarts in ten minutes disables the plugin and tells the user.
+</Step>
+
+<Step title="No replay">
+Events emitted while you were down are gone. After any start or restart, rebuild your view of the world from host methods (for example `get_followed_live`), do not assume you saw every event.
+</Step>
+
+<Step title="Shutdown">
+On `shutdown`, finish in-flight work and respond `null`. On `exit`, exit with code 0. If you are still alive 5 seconds after `exit`, the host kills you.
+</Step>
+
+</Steps>
+
+### What the host can tell you, and what you can ask it
+
+Events the host pushes to you (you opt in via `hooks`), and the methods you can call back, are the complete surface. The headline ones:
+
+- Events: `on_stream_start`, `on_stream_stop`, `on_channel_change`, `on_watch_tick` (every ~60s, cadence not guaranteed), `on_followed_live`, `on_chat_message`, `on_panel_change`.
+- Methods: `get_followed_live`, `notify` (user-facing, rate-limited), `log` (to your log file), `register_panel` / `get_panel_values` (your settings UI), `get_credential` (the gated login handoff), `set_upstream` (for playback-resolving plugins).
+
+Every method is gated. Calling one outside your granted set fails with `capability_denied`. See [Events](/docs/api-events) and [Host methods](/docs/api-host-methods) for the full surface.
+
+</Tab>
+
+<Tab value="UI plugin">
+
+## Build a ui plugin
+
+A `ui` plugin is a single bundled ES module the app imports into its own interface. It contributes real UI through one `api` object handed to it at load. This is the minimal walkthrough; the complete `api` object reference is in [UI plugins](/docs/plugin-ui).
+
+### The manifest
+
+A `ui` plugin's manifest is short. The `[capabilities]` and `[contributes]` blocks stay empty: those are wire-protocol concepts for `process` plugins. A UI plugin's whole surface is the `api` object, and its contributions are registered live at load, not declared in the manifest.
+
+```toml
+id          = "yourhandle.my-ui-plugin"
+name        = "My UI Plugin"
+version     = "1.0.0"
+author      = "yourhandle"
+tier        = "A"
+description = "A floating panel with a title-bar button and a hotkey."
+host_min    = "7.8.6"
+
+[runtime]
+kind  = "ui"
+entry = "dist/main.js"
+```
+
+### The module contract
+
+Your bundle exports up to three functions:
+
+```ts
+import type { PluginApi } from 'streamnook'; // see note on types below
+
+// Called once when the plugin loads in a window. Register contributions here.
+// May return a cleanup function.
+export function activate(api: PluginApi) { /* ... */ }
+
+// Optional. Called before unload (disable, uninstall, update). The host also
+// tears down every registration for you; this is for your own timers/listeners.
+export function deactivate() { /* ... */ }
+
+// Optional. Called inside a popout OS window opened via api.windows.open.
+// Return the React component to render as that window's content.
+export function windowSurface(surfaceId: string, api: PluginApi) { return MyComponent; }
+```
+
+`activate` runs once per window that hosts contributions (the main window, the multi-chat popout), so registrations only surface where something consumes them. Disabling unloads the module and removes every registration; re-enabling evaluates a fresh instance.
+
+### A minimal activate
+
+```tsx
+import { ClipboardList } from 'lucide-react';
+import type { PluginApi } from '../../../src/plugins-ui/types';
+
+export function activate(api: PluginApi): void {
+  api.ui.registerTitleBarButton({
+    id: 'my-panel',
+    tooltip: 'My Panel',
+    Icon: ClipboardList,
+    onClick: () => { /* toggle your overlay's open state */ },
+  });
+
+  api.ui.registerOverlay({ id: 'my-panel', Component: MyOverlay });
+
+  api.commands.registerKeybinding({
+    id: 'myplugin.toggle',
+    label: 'Toggle My Panel',
+    category: 'Navigation',
+    defaultBindings: ['Ctrl+Shift+M'],
+    run: () => { /* toggle */ },
+  });
+}
+```
+
+The full `api` object (overlays, slots, palette items, settings panels, popout windows, cross-window events, chat helpers, logging, and the native component kit) is documented in [UI plugins](/docs/plugin-ui).
+
+### Building the bundle
+
+Bundle to one ES module with the shared libraries aliased to the host's copies. This sharing is required, not an optimization: your components render inside the host's React tree, and hooks only work when both sides run the same React instance. Everything else (icons, a state library) bundles in normally.
+
+`build.mjs`:
+
+```js
+import { build } from 'esbuild';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const dir = path.dirname(fileURLToPath(import.meta.url));
+
+const hostLibShims = {
+  name: 'host-lib-shims',
+  setup(b) {
+    b.onResolve({ filter: /^react\/jsx-runtime$/ }, () => ({ path: path.join(dir, 'shims', 'jsx-runtime.cjs') }));
+    b.onResolve({ filter: /^react$/ }, () => ({ path: path.join(dir, 'shims', 'react.cjs') }));
+    b.onResolve({ filter: /^framer-motion$/ }, () => ({ path: path.join(dir, 'shims', 'framer-motion.cjs') }));
+  },
+};
+
+await build({
+  entryPoints: [path.join(dir, 'src', 'index.tsx')],
+  outfile: path.join(dir, 'dist', 'main.js'),
+  bundle: true,
+  format: 'esm',
+  target: 'es2022',
+  jsx: 'automatic',
+  plugins: [hostLibShims],
+  logLevel: 'info',
+});
+```
+
+Each shim re-exports the host copy. `shims/react.cjs`:
+
+```js
+module.exports = globalThis.__STREAMNOOK_HOST_LIBS__.react;
+```
+
+`shims/jsx-runtime.cjs` and `shims/framer-motion.cjs` follow the same pattern with `.reactJsxRuntime` and `.framerMotion`.
+
+<Note>
+The `PluginApi` type lives in the StreamNook source at `src/plugins-ui/types.ts`. When developing inside or beside the StreamNook tree, import it from there (the reference plugins use a relative path). When developing standalone, copy the interface or declare a minimal local type; the runtime object is what matters.
+</Note>
+
+</Tab>
+
+</Tabs>
+
+## Hybrid plugins
+
+A background worker that also wants native controls is a hybrid: a `process` plugin that adds `ui_entry` to its runtime block. The executable does the background work, the module contributes the native controls and settings screen. Both halves install, enable, and disable as one plugin. See [UI plugins](/docs/plugin-ui) for the full hybrid contract and how the two halves talk through the hook system.
+
+```toml
+[runtime]
+kind      = "process"
+entry     = "target/release/worker.exe"   # the sidecar
+ui_entry  = "ui/dist/main.js"             # the in-app UI module
+transport = "stdio"
+```
+
+## Run it, test it, debug it
+
+### Dev install
+
+You do not package anything to develop. In StreamNook: Settings, Plugins, Sources, Develop, and register the folder that contains your `plugin.toml`. The plugin gets the same capability and consent behavior an installed plugin gets. Enable it from the plugins list.
+
+### Logs
+
+The host hands your plugin a `log_dir` in the `initialize` handshake and captures both your `log` calls and your stderr into a log file there. On Windows dev builds this is under:
+
+```text
+%LOCALAPPDATA%\com.streamnook.dev\plugins\<your-plugin-id>\plugin.log
+```
+
+Reading this file is the fastest way to see what your plugin is actually doing. It is readable even while the plugin runs.
+
+### Re-registering after a manifest change
+
+The folder registration reads `plugin.toml` once. If you change the manifest (new capabilities, new `[contributes]` entries), disable the plugin, re-register the folder via Develop so the new manifest is picked up, then enable it again.
+
+### The rebuild lock (compiled process plugins)
+
+<Warning>
+A running plugin process holds its own executable open. On Windows a fresh `cargo build --release` (or any rebuild that overwrites the exe) fails with "Access is denied" while the plugin is enabled. The flow is: disable the plugin in Settings (the process exits cleanly), rebuild, then re-enable. A `cargo check` works while it runs because it writes no exe.
+</Warning>
+
+### Common pitfalls
+
+- **No response to `initialize` within 10 seconds** kills the plugin. Do not do slow startup work before responding; do it on `initialized`.
+- **Missing `ping` responses** restart you. Make sure your read loop is never blocked.
+- **Assuming event replay.** After a restart, rebuild state from host methods.
+- **Requesting capabilities you do not use.** It reads as a red flag in the consent dialog and during index review.
+- **`ui` plugin hooks not working.** If React hooks throw, your bundle did not alias `react` to the host copy. Check the shims.
+
+## Next steps
+
+<CardGroup cols={2}>
+<Card title="Manifest reference" icon="gear" href="/docs/plugin-manifest">
+Every `plugin.toml` field and the tiers.
+</Card>
+<Card title="Protocol" icon="terminal" href="/docs/api-protocol">
+The wire protocol, payloads, and error codes.
+</Card>
+<Card title="Events" icon="plug" href="/docs/api-events">
+Every event the host can push to you.
+</Card>
+<Card title="Host methods" icon="code" href="/docs/api-host-methods">
+Every method you can call back into the host.
+</Card>
+<Card title="Capabilities" icon="book" href="/docs/plugin-capabilities">
+The permission vocabulary and consent text.
+</Card>
+<Card title="UI plugins" icon="book" href="/docs/plugin-ui">
+The full `api` object and hybrid plugins.
+</Card>
+<Card title="Publishing" icon="rocket" href="/docs/plugin-publishing">
+Signing, hosting, and listing in the index.
+</Card>
+</CardGroup>

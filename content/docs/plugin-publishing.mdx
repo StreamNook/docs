@@ -1,0 +1,202 @@
+---
+title: Publishing
+description: Sign a release, host it, and submit it to a plugin index, plus updates and key rotation.
+---
+
+Once a plugin works locally, you publish it by packaging a signed release, hosting it somewhere you control, and adding an entry to an index. StreamNook never hosts plugin artifacts. Authors do. The index just points at your files and pins your key.
+
+The signing scheme, the full `index.json` field reference, and how key pinning works in detail live in [Signing and the index format](/docs/plugin-signing). This page is the workflow that uses them.
+
+## Which index
+
+<CardGroup cols={2}>
+  <Card title="Official index" icon="book">
+    A focused, curated set of tier A and B plugins (emote and badge providers, chat tools, overlays, notifiers, integrations, local features). The app trusts it out of the box.
+  </Card>
+  <Card title="Community sources" icon="plug">
+    Everything else, including tier C power-user add-ons that run their own background work or use the user's login. Anyone can run a community source. The format is identical. Users add one explicitly and confirm its key fingerprint.
+  </Card>
+</CardGroup>
+
+The official index is the [streamnook-plugins](https://github.com/StreamNook/streamnook-plugins) repository.
+
+Your tier (declared in the manifest, verified by the curator) decides where you can be listed. You cannot self-certify into a lower tier. See the tier table in [The manifest](/docs/plugin-manifest).
+
+<Note>
+  The `app.streamnook.` id prefix is reserved for first-party plugins and is rejected from third parties. Pick a handle-based id like `yourhandle.my-plugin`.
+</Note>
+
+## Publish a release
+
+<Steps>
+
+<Step title="Create your signing key">
+
+```bash
+minisign -G
+```
+
+Keep the secret key offline and treat it like a password. Your **public** key identifies you to every StreamNook user. The first install of your plugin pins it, and every future update must be signed with the same key. Losing or leaking it is a real problem.
+
+<Warning>
+  There is no recovery if you lose this key. Back up the secret key somewhere safe and offline before you publish anything.
+</Warning>
+
+</Step>
+
+<Step title="Package the release">
+
+Zip the plugin folder contents so the manifest sits at the **zip root**, not inside a subfolder:
+
+```text
+my-plugin-1.0.0.zip
+├── plugin.toml
+├── my-plugin.exe     (or dist/main.js for a ui plugin)
+└── assets/
+```
+
+</Step>
+
+<Step title="Sign and hash">
+
+```bash
+minisign -Sm my-plugin-1.0.0.zip
+certutil -hashfile my-plugin-1.0.0.zip SHA256
+```
+
+The first command produces `my-plugin-1.0.0.zip.minisig`. The second prints the SHA-256 you put in the index entry.
+
+</Step>
+
+<Step title="Host the files">
+
+Upload the zip and the `.minisig` to a stable, direct-download location you control. A GitHub release on your plugin's own repository is the expected shape.
+
+<Info>
+  StreamNook never hosts plugin artifacts. The index only references URLs you own, so the download has to come from you.
+</Info>
+
+</Step>
+
+<Step title="Open a pull request to the index">
+
+Add your entry to `index.json`:
+
+```json
+{
+  "id": "yourhandle.my-plugin",
+  "name": "My Plugin",
+  "version": "1.0.0",
+  "tier": "A",
+  "description": "One or two plain sentences about what it does.",
+  "homepage": "https://github.com/yourhandle/my-plugin",
+  "host_min": "8.0.0",
+  "released_at": "2026-06-10T00:00:00Z",
+  "author": {
+    "name": "yourhandle",
+    "pubkey": "RW...your minisign public key..."
+  },
+  "artifact": {
+    "url": "https://github.com/yourhandle/my-plugin/releases/download/v1.0.0/my-plugin-1.0.0.zip",
+    "sha256": "...",
+    "signature_url": "https://github.com/yourhandle/my-plugin/releases/download/v1.0.0/my-plugin-1.0.0.zip.minisig"
+  }
+}
+```
+
+Make the detail page worth opening by adding the optional presentation fields, which the marketplace renders:
+
+```json
+"icon_url":   "https://raw.githubusercontent.com/yourhandle/my-plugin/main/assets/icon.png",
+"readme_url": "https://raw.githubusercontent.com/yourhandle/my-plugin/main/README.md"
+```
+
+The README renders as plain markdown in the app (headings, lists, images, code blocks). Raw HTML shows as text, not rendered. Lead with what the plugin does and a screenshot.
+
+</Step>
+
+<Step title="Review">
+
+Before an entry merges, the curator checks:
+
+- The manifest inside the artifact matches the index entry exactly (id, version, tier).
+- The declared tier matches what the plugin actually does, including its network behavior.
+- The signature verifies against the public key in the entry.
+- The id does not squat another author's namespace. The `app.streamnook.` prefix is reserved for first-party plugins and rejected from third parties.
+
+<Check>
+  Run the pre-publish checklist below before you open the PR. Everything the curator verifies, you can verify first.
+</Check>
+
+</Step>
+
+</Steps>
+
+## Multi-platform builds
+
+A `process` plugin is a native binary, so ship one build per OS. An index entry can carry a `platforms` map keyed by `<os>-<arch>`, each with its own url, hash, size, and signature. The supported keys are:
+
+| Key | Platform |
+|---|---|
+| `windows-x86_64` | Windows on Intel or AMD |
+| `macos-x86_64` | macOS on Intel |
+| `macos-aarch64` | macOS on Apple Silicon |
+| `linux-x86_64` | Linux on Intel or AMD |
+| `linux-aarch64` | Linux on ARM |
+
+The host installs the build matching the user's platform and shows the plugin as unavailable where there is no build. `id`, `version`, and `tier` must be identical across platforms.
+
+A `ui` plugin is one artifact everywhere, so it needs no `platforms` map. The full shape is in [Signing and the index format](/docs/plugin-signing).
+
+## Updating and rotating keys
+
+Ship a new version by uploading a new signed zip and opening a PR that bumps `version`, `artifact`, and `updated_at`.
+
+<Warning>
+  Sign every update with the **same key** you used for the first release. The host pins your key on first install and rejects updates signed by a different one.
+</Warning>
+
+An update that requests **new capabilities** re-runs the consent flow on the user's machine. Adding capabilities is a visible event, not a silent one.
+
+### Rotating your key
+
+If you must change your key, the index entry lists the old key in `previous_pubkeys`, and the artifact carries a second signature by the old key (`<artifact>.minisig.prev`). With that rotation proof the host re-pins silently.
+
+Without the proof, the update is blocked for everyone who has your plugin installed, and they see a prominent warning naming both fingerprints. So guard your key, and if you rotate, provide the proof.
+
+<Tip>
+  The exact `previous_pubkeys` field layout and the `.minisig.prev` second-signature flow are documented in [Signing and the index format](/docs/plugin-signing).
+</Tip>
+
+## Pre-publish checklist
+
+- [ ] `id` is a unique lowercase dotted id (e.g. `yourhandle.my-plugin`), not under `app.streamnook.`
+- [ ] `version` bumped (semver) since the last release
+- [ ] `[capabilities]` lists only what the plugin actually uses
+- [ ] `network` honestly reflects whether the plugin connects out
+- [ ] `tier` matches what the plugin does
+- [ ] `host_min` set to the lowest StreamNook version you tested against
+- [ ] Plugin responds to `initialize` fast, answers `ping`, handles `shutdown`/`exit` (process kind)
+- [ ] Plugin degrades cleanly when a capability is denied or a credential is revoked
+- [ ] `ui` bundle aliases `react`, `react/jsx-runtime`, `framer-motion` to the host shims
+- [ ] README leads with what it does and a screenshot
+- [ ] Zip has `plugin.toml` at the root, signed with minisign, SHA-256 computed
+- [ ] Artifact and `.minisig` hosted at stable URLs you control
+- [ ] Index entry matches the manifest exactly
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Signing and the index" icon="gear" href="/docs/plugin-signing">
+    The minisign scheme, full index.json fields, key pinning and rotation in depth.
+  </Card>
+  <Card title="The manifest" icon="code" href="/docs/plugin-manifest">
+    Every plugin.toml field and the tier table that decides where you can list.
+  </Card>
+  <Card title="Official plugins" icon="book" href="/docs/plugin-official">
+    What makes a plugin official and how the curated index is reviewed.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/docs/plugin-quickstart">
+    Build and run a plugin locally before you package it for release.
+  </Card>
+</CardGroup>

@@ -1,0 +1,214 @@
+---
+title: Host Methods
+description: Every method a plugin can call on StreamNook, with parameters, results, and capability gates.
+---
+
+These are the plugin-to-host JSON-RPC requests (unless a method is marked as a notification). Every method is gated. Calling one outside the granted set fails with `capability_denied`. See [Capabilities](/docs/plugin-capabilities) for what each grant covers and [the protocol](/docs/api-protocol) for the full error code list.
+
+<Info>
+  Requests carry an `id` and expect exactly one response. Notifications carry no `id` and receive no response, not even an error. Sending an ungranted notification is silently dropped and logged.
+</Info>
+
+## get_followed_live
+
+A request. No capability beyond the `get_followed_live` host method grant.
+
+**Params:**
+
+```json
+{}
+```
+
+**Result:**
+
+```json
+{ "channels": [<channel>...] }
+```
+
+The `channel` object is the shared shape used across the API. See [Events](/docs/api-events) for its fields.
+
+<Tip>
+  After any (re)start a plugin should rebuild its view of the world from `get_followed_live` rather than assuming it saw every `on_followed_live` event. Events emitted while a plugin is down are not replayed.
+</Tip>
+
+## set_upstream
+
+A request. Requires the `set_upstream` host method grant.
+
+**Params:**
+
+```json
+{ "stream_id": "solo", "playlist_url": "https://..." }
+```
+
+**Result:**
+
+```json
+{}
+```
+
+Replaces the upstream playlist the host's local relay serves for that stream and tells the player to reload onto it. This is how a resolution-owning plugin feeds the relay mid-stream (for example after the plugin itself detected a leaked ad on the current upstream). `playlist_url` is a media playlist matching the session's quality, not a master.
+
+**Relay session ids:** the single player's session is the literal id `solo`. Each multi-stream tile uses its own tile id. A plugin learns the id for a session from the args of the action that asked it to resolve (see the [hook catalog](/docs/api-hooks)).
+
+**Errors:** `unknown_stream` if no relay session matches `stream_id`.
+
+## get_credential
+
+A request. Requires the credential kind to be in the manifest grant.
+
+**Params:**
+
+```json
+{ "kind": "twitch.android" }
+```
+
+**Result:**
+
+```json
+{
+  "kind": "twitch.android",
+  "token": "...",
+  "client_id": "...",
+  "user_id": "...",
+  "device_id": "...",
+  "expires_at": "2026-06-11T00:00:00Z"
+}
+```
+
+Fields other than `kind` and `token` are nullable.
+
+<Warning>
+  The first call for a kind in a session may block up to 120 seconds while the host shows the consent prompt.
+</Warning>
+
+Every successful handover is written to the plugin's audit log.
+
+**Errors:**
+
+- `capability_denied`: the kind is not in the manifest grant.
+- `consent_denied`: the user declined, or the grant was revoked.
+- `credential_unavailable`: the user has never completed the auth that produces this credential.
+
+## notify
+
+A request. Requires the `notify` host method grant.
+
+**Params:**
+
+```json
+{ "level": "info" | "warning" | "error", "message": "..." }
+```
+
+**Result:**
+
+```json
+{}
+```
+
+Shows a user-facing notification attributed to the plugin.
+
+<Note>
+  Rate limited by the host: a burst of 3, then at most one per 10 seconds. Excess calls fail with `rate_limited`. Use `log` for anything the user does not need to see.
+</Note>
+
+## log
+
+A notification. Requires the `log` host method grant. No response is sent.
+
+**Params:**
+
+```json
+{ "level": "debug" | "info" | "warning" | "error", "message": "..." }
+```
+
+Appends to the plugin's log file under `log_dir`.
+
+## register_panel
+
+A request. Requires `ui: panel`.
+
+**Params:**
+
+```json
+{ "schema": <panel schema> }
+```
+
+**Result:**
+
+```json
+{}
+```
+
+Registers (or replaces) the plugin's settings panel. The host renders it. The plugin never gets arbitrary UI access. See [Plugin UI](/docs/plugin-ui) for how panels appear in the app.
+
+**Panel schema:**
+
+```json
+{
+  "title": "Example Plugin",
+  "sections": [
+    {
+      "label": "Behavior",
+      "description": "Optional section description",
+      "fields": [
+        { "key": "enabled", "type": "toggle", "label": "Enable", "description": "...", "default": false },
+        { "key": "slots", "type": "number", "label": "Slots", "min": 1, "max": 2, "default": 2 },
+        { "key": "mode", "type": "select", "label": "Mode", "options": [ { "value": "a", "label": "Mode A" } ], "default": "a" },
+        { "key": "note", "type": "text", "label": "Note", "placeholder": "...", "default": "" },
+        { "key": "channels", "type": "string_list", "label": "Channels" }
+      ]
+    }
+  ]
+}
+```
+
+**Field types in v1:**
+
+| Type | Value | Notes |
+|---|---|---|
+| `toggle` | boolean | |
+| `number` | number | |
+| `select` | one of `options` | each option is `{ "value": ..., "label": ... }` |
+| `text` | string | supports `placeholder` |
+| `string_list` | string array | rendered as add-and-remove chip rows |
+| `channel_list` | array of `{ channel_id, channel_login, display_name }` | a Twitch channel search-and-pick control |
+| `slider` | number | a range with `min` / `max` / `step`, plus optional `unit` and `display_divisor` for the readout |
+| `folder` | string | a directory path chosen through the native folder dialog. The empty string means the plugin's default, and `placeholder` is what shows in that case |
+
+The host renders each type with a rich native control and persists values per plugin, delivering changes via the `on_panel_change` event. These are generic: any plugin composes them, and the host renders them without knowing which plugin or feature it serves.
+
+## get_panel_values
+
+A request. Requires `ui: panel`.
+
+**Params:**
+
+```json
+{}
+```
+
+**Result:**
+
+```json
+{ "values": { "<key>": <value> } }
+```
+
+Returns the current persisted values for the plugin's panel.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Protocol" icon="book" href="/docs/api-protocol">
+    Transport, lifecycle, and the full error code list.
+  </Card>
+  <Card title="Events" icon="plug" href="/docs/api-events">
+    Host-to-plugin notifications and the shared channel object.
+  </Card>
+  <Card title="Capabilities" icon="gear" href="/docs/plugin-capabilities">
+    What each grant covers and how users approve them.
+  </Card>
+  <Card title="Hooks" icon="code" href="/docs/api-hooks">
+    Action hooks, including how a plugin learns a relay session id.
+  </Card>
+</CardGroup>

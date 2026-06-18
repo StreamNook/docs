@@ -1,0 +1,47 @@
+---
+title: MultiNook Presets
+description: Save, load, and manage favorite MultiNook layouts.
+---
+
+A preset is a saved set of channels you can reopen in one click. Presets are perfect for groups you watch together (a team, an event, a friend group), so you do not rebuild the grid every time.
+
+Open presets from the bookmark button in the [grid](/docs/multinook) toolbar. If a preset is loaded, its icon shows on the button.
+
+## What a preset stores
+
+A preset remembers the channels and each channel's quality preference. It does not store transient state like volume, mute, focus, or tile position, those are set fresh each time you load it.
+
+## Saving a preset
+
+<Steps>
+  <Step title="From your current grid">
+    Open presets and choose **Save current grid as preset**, then give it a name. It captures every stream currently in the grid.
+  </Step>
+  <Step title="Or build one by hand">
+    Choose **New**, search and add channels (the same followed-and-search box as the grid), name it, and save.
+  </Step>
+</Steps>
+
+## Loading a preset
+
+You can load a preset two ways:
+
+- **Load (replace):** stops the current streams and swaps the grid to the preset's channels. The preset becomes the equipped layout, and a "now playing" banner appears with a **Stop** button that closes those streams without deleting the preset.
+- **Add to grid (append):** merges the preset's channels into what you are already watching, without stopping anything. Duplicates are skipped.
+
+The first tile is focused and the rest start muted, the same as adding streams normally. If a preset has more than 25 channels, only the first 25 load.
+
+## Managing presets
+
+From a preset's menu you can:
+
+- **Edit** its name and channels.
+- **Duplicate** it (a copy is inserted right after the original).
+- **Delete** it (with a confirm step).
+- **Set a custom icon**, either a game's box art or one of the preset's channel avatars. Otherwise it shows a stack of channel avatars.
+
+Presets are unlimited and are saved with the rest of your settings, so they survive restarts and move with a [settings backup](/docs/settings#backup).
+
+<Card title="Next: MultiChat" icon="book" href="/docs/multichat">
+  Read several chats at once.
+</Card>

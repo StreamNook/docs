@@ -1,0 +1,67 @@
+---
+title: Interface Tour
+description: The window, title bar, sidebar, and how the layout works.
+---
+
+StreamNook runs in a single window with its own title bar, a sidebar for navigating channels, the player, and chat. This page explains where everything is.
+
+## The title bar
+
+The custom title bar runs across the top. From left to right it holds the StreamNook logo, a row of quick-access buttons, and the window controls.
+
+| Button | What it opens |
+| --- | --- |
+| **Logo** | The About dialog. |
+| **Drops** (gift icon) | The Drops center. Shows live progress while mining, and a "sign in" cue if Drops are not connected yet. |
+| **Badges** (medal icon) | Your badges and 7TV paints. |
+| **Whispers** (message icon) | Your whispers. |
+| **Marketplace** (store icon) | The plugin marketplace. Shows a count badge when plugin updates are available. |
+| **Settings** (gear icon) | The settings dialog. |
+| **Minimize / Maximize / Close** | Standard window controls. |
+
+You can drag the window by its title bar. Plugins can add their own buttons to this row.
+
+## The sidebar
+
+The sidebar lists your followed channels and recommendations so you can jump between streams. You choose how much of it shows in **Settings, Interface, Sidebar Display Mode**:
+
+- **Expanded:** always full width with names.
+- **Compact:** avatars only, expanding on hover. This is the default.
+- **Hidden:** appears only when you hover the edge.
+- **Disabled:** off entirely.
+
+Click any channel to open it in the player.
+
+## Player and chat layout
+
+When you open a stream, the player fills the main area and chat sits beside it.
+
+- **Resize chat** by dragging the divider between the player and chat.
+- **Chat placement** can be on the right or on the bottom.
+- **Hide chat** for a clean, full-width player.
+- **Lock aspect ratio** (on by default in **Settings, Player**) keeps the video at 16:9 by resizing the window to fit the player plus chat as you change things.
+
+### Theater mode
+
+Press `T` to toggle theater mode. The sidebar and chat hide and the video fills the window. Press `T` again to return. You can define your own theater sizes under **Settings, Interface, Compact View Presets**.
+
+### Fullscreen
+
+Press `F` or use the fullscreen button on the player to go fully fullscreen. See [Player and controls](/docs/player) for all playback keys.
+
+## Themes
+
+StreamNook ships with a set of themes grouped into categories in **Settings, Theme**, including a true-black OLED option. You can:
+
+- Pick any built-in theme.
+- Adjust **glass transparency** for the blurred panels.
+- Choose an **interface font**.
+- Build and save your own custom theme with full control over background, text, accent, and highlight colors.
+
+## Motion and performance
+
+If animations feel heavy, set **Settings, Interface, Motion** to **Reduced** or **Off**. Off gives the snappiest feel on lower-end machines while keeping things like loading spinners working.
+
+<Card title="Next: Player and controls" icon="book" href="/docs/player">
+  Master playback, quality, and latency.
+</Card>

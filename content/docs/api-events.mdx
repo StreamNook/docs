@@ -1,0 +1,92 @@
+---
+title: Events
+description: Every event StreamNook delivers to a plugin, with payloads and semantics.
+---
+
+Events are host-to-plugin JSON-RPC notifications. They carry no `id` and receive no response. A plugin only receives an event if it both requested that event in its manifest grant and listed it in the `hooks` array of its `initialize` result. See [the handshake](/docs/api-protocol) for how that subset is negotiated.
+
+<Info>
+Events emitted while a plugin is down are not replayed, and delivery order is preserved per plugin. After any restart, rebuild your view of the world from [host methods](/docs/api-host-methods) (for example `get_followed_live`) rather than assuming you saw every event.
+</Info>
+
+## The channel object
+
+Several events share one channel shape:
+
+```json
+{
+  "channel_id": "12345",
+  "login": "somechannel",
+  "display_name": "SomeChannel",
+  "game_id": "509658",
+  "game_name": "Just Chatting",
+  "started_at": "2026-06-10T17:00:00Z",
+  "viewer_count": 14203
+}
+```
+
+`game_id`, `game_name`, `started_at`, and `viewer_count` are nullable. Timestamps are RFC 3339 UTC throughout.
+
+## Event catalog
+
+| Event | Payload | Semantics |
+|---|---|---|
+| `on_stream_start` | `{ "channel": <channel> }` | The user started playback of a channel in the app |
+| `on_stream_stop` | `{ "channel_id": "12345" }` | Playback of that channel stopped |
+| `on_channel_change` | `{ "channel_id": "12345", "login": "somechannel" }` | The active on-screen channel changed (channel switch, or focus change in the multi-stream grid) |
+| `on_watch_tick` | `{ "active_channel_id": "12345", "ts": "<RFC 3339>" }` | Periodic tick, nominally every 60 seconds while the app runs. `active_channel_id` is null when nothing is playing. Plugins must not assume exact cadence |
+| `on_followed_live` | `{ "channels": [<channel>...] }` | The set of live followed channels, sent after startup and whenever the host refreshes it |
+| `on_chat_message` | `{ "channel": "somechannel", "message": <chat message> }` | A chat line arrived in a channel the app has open, or was sent from the app. One event per message; delivery starts once the plugin is running and a chat connection exists, with no history replay |
+| `on_settings_change` | `{ "keys": ["..."] }` | Reserved. Host settings keys the host chooses to expose changed. No keys are guaranteed in v1 |
+| `on_panel_change` | `{ "values": { "<key>": <value> } }` | The user changed values in the plugin's settings panel (requires `ui: panel`) |
+
+<Note>
+`on_panel_change` requires the `ui: panel` capability. See [plugin capabilities](/docs/plugin-capabilities) for what each grant unlocks.
+</Note>
+
+## The chat message object
+
+This is the `message` carried by `on_chat_message`:
+
+```json
+{
+  "id": "885196de-cb67-427a-baa8-58f001aa3fe4",
+  "user_id": "12345",
+  "login": "somechatter",
+  "display_name": "SomeChatter",
+  "color": "#FF7F50",
+  "badges": [ { "name": "subscriber", "version": "12" } ],
+  "text": "hello",
+  "is_action": false,
+  "msg_type": null,
+  "system_message": null,
+  "bits": null,
+  "ts": "2026-06-10T17:00:00Z"
+}
+```
+
+Field notes:
+
+- `color`, `msg_type`, `system_message`, and `bits` are nullable.
+- `is_action` marks a `/me` line.
+- Event-style lines (subscriptions, gifts, raids, announcements) carry Twitch's notice id in `msg_type` (for example `sub`, `raid`, `announcement`) and a readable `system_message`. `text` then holds the user's attached message and may be empty.
+- A message the user sends from the app is delivered with an empty `id`, since no server-assigned id exists for it.
+
+The shape is deliberately lean: identity, text, and event metadata only, no render data.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="The handshake" icon="plug" href="/docs/api-protocol">
+    How events are negotiated at initialize time.
+  </Card>
+  <Card title="Hooks" icon="code" href="/docs/api-hooks">
+    Action-time calls the host makes into your plugin.
+  </Card>
+  <Card title="Host methods" icon="terminal" href="/docs/api-host-methods">
+    Calls your plugin makes back into StreamNook.
+  </Card>
+  <Card title="Capabilities" icon="gear" href="/docs/plugin-capabilities">
+    What each manifest grant unlocks.
+  </Card>
+</CardGroup>
